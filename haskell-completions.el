@@ -1,4 +1,4 @@
-;;; haskell-completions.el --- Haskell Completion package
+;;; haskell-completions.el --- Haskell Completion package -*- lexical-binding: t -*-
 
 ;; Copyright © 2015 Athur Fayzrakhmanov. All rights reserved.
 
@@ -74,11 +74,11 @@ whitespace or new line, otherwise returns nil.
 
   Returns nil in presense of active region."
   (when (not (region-active-p))
-    (when (looking-at (rx (| space line-end punct)))
+    (when (looking-at-p (rx (| space line-end punct)))
       (when (not (bobp))
         (save-excursion
           (backward-char)
-          (not (looking-at (rx (| space line-end)))))))))
+          (not (looking-at-p (rx (| space line-end)))))))))
 
 (defun haskell-completions-grab-pragma-prefix ()
   "Grab completion prefix for pragma completions.
@@ -248,10 +248,6 @@ Returns nil if no completions available."
                      ;; for completions list in case of module name or
                      ;; identifier prefixes
                      (haskell-completions-sync-complete-repl pfx imp)))))
-          (when (or (equal '("") lst)
-                    (eql nil lst))
-            ;; complete things using dabbrev
-            (setq lst (haskell-completions-dabbrev-completions pfx)))
           (when lst
             (list beg end lst)))))))
 
@@ -265,12 +261,6 @@ function is supposed for internal use."
    (if import
        (concat "import " prefix)
      prefix)))
-
-(defun haskell-completions-dabbrev-completions (prefix)
-  "Return completion list for PREFIX using dabbrev facility.
-This function is supposed for internal use."
-  (dabbrev--reset-global-variables)
-  (dabbrev--find-all-expansions prefix nil))
 
 (provide 'haskell-completions)
 ;;; haskell-completions.el ends here

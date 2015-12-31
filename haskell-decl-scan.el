@@ -1,4 +1,4 @@
-;;; haskell-decl-scan.el --- Declaration scanning module for Haskell Mode
+;;; haskell-decl-scan.el --- Declaration scanning module for Haskell Mode -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2004, 2005, 2007, 2009  Free Software Foundation, Inc.
 ;; Copyright (C) 1997-1998  Graeme E Moss
@@ -105,17 +105,20 @@
 (require 'syntax)
 (require 'imenu)
 
+;;;###autoload
 (defgroup haskell-decl-scan nil
   "Haskell declaration scanning (`imenu' support)."
   :link '(custom-manual "(haskell-mode)haskell-decl-scan-mode")
   :group 'haskell
   :prefix "haskell-decl-scan-")
 
+;;;###autoload
 (defcustom haskell-decl-scan-bindings-as-variables nil
   "Whether to put top-level value bindings into a \"Variables\" category."
   :group 'haskell-decl-scan
   :type 'boolean)
 
+;;;###autoload
 (defcustom haskell-decl-scan-add-to-menubar t
   "Whether to add a \"Declarations\" menu entry to menu bar."
   :group 'haskell-decl-scan
@@ -488,15 +491,24 @@ datatypes) in a Haskell file for the `imenu' package."
                  (name (car name-posns))
                  (posns (cdr name-posns))
                  (start-pos (car posns))
-                 (type (cdr result))
+                 (type (cdr result)))
                  ;; Place `(name . start-pos)' in the correct alist.
-                 (sym (cdr (assq type
-                                 '((variable . index-var-alist)
-                                   (datatype . index-type-alist)
-                                   (class . index-class-alist)
-                                   (import . index-imp-alist)
-                                   (instance . index-inst-alist))))))
-            (set sym (cons (cons name start-pos) (symbol-value sym))))))
+                 (cl-case type
+                   (variable
+                    (setq index-var-alist
+                          (cl-acons name start-pos index-var-alist)))
+                   (datatype
+                    (setq index-type-alist
+                          (cl-acons name start-pos index-type-alist)))
+                   (class
+                    (setq index-class-alist
+                          (cl-acons name start-pos index-class-alist)))
+                   (import
+                    (setq index-imp-alist
+                          (cl-acons name start-pos index-imp-alist)))
+                   (instance
+                    (setq index-inst-alist
+                          (cl-acons name start-pos index-inst-alist)))))))
     ;; Now sort all the lists, label them, and place them in one list.
     (message "Sorting declarations in %s..." bufname)
     (when index-type-alist

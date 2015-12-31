@@ -1,4 +1,4 @@
-;;; haskell.el --- Top-level Haskell package
+;;; haskell.el --- Top-level Haskell package -*- lexical-binding: t -*-
 
 ;; Copyright (c) 2014 Chris Done. All rights reserved.
 
@@ -19,6 +19,7 @@
 
 (require 'cl-lib)
 (require 'haskell-mode)
+(require 'haskell-hoogle)
 (require 'haskell-process)
 (require 'haskell-debug)
 (require 'haskell-interactive-mode)
@@ -40,7 +41,8 @@
 
 (defvar interactive-haskell-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-l") 'haskell-process-load-or-reload)
+    (define-key map (kbd "C-c C-l") 'haskell-process-load-file)
+    (define-key map (kbd "C-c C-r") 'haskell-process-reload)
     (define-key map (kbd "C-c C-t") 'haskell-process-do-type)
     (define-key map (kbd "C-c C-i") 'haskell-process-do-info)
     (define-key map (kbd "M-.") 'haskell-mode-jump-to-def-or-tag)
@@ -64,13 +66,14 @@
             nil
             t))
 
-(make-obsolete #'haskell-process-completions-at-point
-               #'haskell-completions-sync-completions-at-point
+(make-obsolete 'haskell-process-completions-at-point
+               'haskell-completions-sync-completions-at-point
                "June 19, 2015")
 (defun haskell-process-completions-at-point ()
   "A completion-at-point function using the current haskell process."
   (when (haskell-session-maybe)
-    (let ((process (haskell-process)) symbol symbol-bounds)
+    (let ((process (haskell-process))
+	  symbol-bounds)
       (cond
        ;; ghci can complete module names, but it needs the "import "
        ;; string at the beginning
@@ -319,6 +322,8 @@ If `haskell-process-load-or-reload-prompt' is nil, accept `default'."
              (when ident
                (haskell-process-do-try-info ident)))))))
 
+(defvar xref-prompt-for-identifier nil)
+
 ;;;###autoload
 (defun haskell-mode-jump-to-tag (&optional next-p)
   "Jump to the tag of the given identifier."
@@ -345,7 +350,7 @@ If `haskell-process-load-or-reload-prompt' is nil, accept `default'."
       (basic-save-buffer))))
 
 ;;;###autoload
-(defun haskell-mode-tag-find (&optional next-p)
+(defun haskell-mode-tag-find (&optional _next-p)
   "The tag find function, specific for the particular session."
   (interactive "P")
   (cond
@@ -390,12 +395,18 @@ If `haskell-process-load-or-reload-prompt' is nil, accept `default'."
                                 (current-buffer)))
 
 ;;;###autoload
-(defun haskell-process-reload-file ()
+(defun haskell-process-reload ()
   "Re-load the current buffer file."
   (interactive)
   (save-buffer)
   (haskell-interactive-mode-reset-error (haskell-session))
-  (haskell-process-file-loadish "reload" t nil))
+  (haskell-process-file-loadish "reload" t (current-buffer)))
+
+;;;###autoload
+(defun haskell-process-reload-file () (haskell-process-reload))
+
+(make-obsolete 'haskell-process-reload-file 'haskell-process-reload
+               "2015-11-14")
 
 ;;;###autoload
 (defun haskell-process-load-or-reload (&optional toggle)
@@ -407,7 +418,10 @@ If `haskell-process-load-or-reload-prompt' is nil, accept `default'."
                       (if haskell-reload-p
                           "Now running :reload."
                         "Now running :load <buffer-filename>.")))
-    (if haskell-reload-p (haskell-process-reload-file) (haskell-process-load-file))))
+    (if haskell-reload-p (haskell-process-reload) (haskell-process-load-file))))
+
+(make-obsolete 'haskell-process-load-or-reload 'haskell-process-load-file
+               "2015-11-14")
 
 ;;;###autoload
 (defun haskell-process-cabal-build ()

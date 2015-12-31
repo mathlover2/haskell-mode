@@ -10,7 +10,7 @@
 # We should have a script that changes it everywhere it is needed and
 # syncs it with current git tag.
 #
-VERSION = 13.15-git
+VERSION = 13.17-git
 
 INSTALL_INFO = install-info
 
@@ -23,7 +23,7 @@ INSTALL_INFO = install-info
 #
 # This is particularly useful when EMACS is set in ~/.bash_profile
 #
-EMACS := $(shell echo "$${EMACS:-emacs}")
+EMACS := $(shell which "$${EMACS}" || which "emacs")
 
 EFLAGS = --eval "(add-to-list 'load-path (expand-file-name \"tests/compat\") 'append)" \
 	 --eval "(when (< emacs-major-version 24) \
@@ -38,7 +38,6 @@ ELFILES = \
 	ghci-script-mode.el \
 	highlight-uses-mode.el \
 	haskell-align-imports.el \
-	haskell-bot.el \
 	haskell-cabal.el \
 	haskell-checkers.el \
 	haskell-collapse.el \
@@ -55,6 +54,7 @@ ELFILES = \
 	haskell-doc.el \
 	haskell.el \
 	haskell-font-lock.el \
+	haskell-hoogle.el \
 	haskell-indentation.el \
 	haskell-indent.el \
 	haskell-interactive-mode.el \
@@ -69,7 +69,6 @@ ELFILES = \
 	haskell-process.el \
 	haskell-repl.el \
 	haskell-session.el \
-	haskell-simple-indent.el \
 	haskell-sort-imports.el \
 	haskell-string.el \
 	haskell-unicode-input-method.el \
@@ -145,7 +144,16 @@ doc/html/haskell-mode.svg : images/haskell-mode.svg doc/html/index.html
 doc/html/haskell-mode-32x32.png : images/haskell-mode-32x32.png doc/html/index.html
 	cp $< $@
 
-doc/html : doc/html/index.html doc/html/haskell-mode.css doc/html/haskell-mode.svg doc/html/haskell-mode-32x32.png
+doc/html/anim : doc/anim doc/html/index.html
+	if [ -e $@ ]; then rm -r $@; fi
+	cp -r $< $@
+
+doc/html : doc/html/index.html			\
+           doc/html/haskell-mode.css		\
+           doc/html/haskell-mode.svg		\
+           doc/html/haskell-mode-32x32.png	\
+           doc/html/anim
+
 
 deploy-manual : doc/html
 	cd doc && ./deploy-manual.sh
